@@ -8,6 +8,9 @@ class TADW(object):
 
     def __init__(self, graph, dim, lamb=0.2):
         self.g = graph
+        self.g_1=graph
+        self.g_2=graph
+
         self.lamb = lamb
         self.dim = int(dim / 2)
         self.train()
@@ -102,10 +105,12 @@ class TADW(object):
         self.Vecs = np.hstack(
             (normalize(self.W.T), normalize(np.dot(self.T.T, self.H.T))))
         # get embeddings
-        self.vectors = {}
-        # todo possible has mistake
-        look_back = self.g.look_back_list
+        self.vectors_1 = {}
+        look_back = self.g_1.look_back_list
         for i, embedding in enumerate(self.Vecs):
-            self.vectors[look_back[i]] = embedding
+            self.vectors_1[look_back[i]] = embedding
 
-            self.vectors[i] = embedding
+        self.vectors_2 = {}
+        look_back = self.g_2.look_back_list
+        for i, embedding in enumerate(self.Vecs):
+            self.vectors_1[look_back[i]] = embedding

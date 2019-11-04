@@ -242,9 +242,20 @@ def doGaussianHistogramExample():
     print('EMD: ' + str(emd))
 
 
-def getEMDCommunity(communityOne, communityTwo, vectors):
+def getEMDCommunitys(communityOne, communityTwo, vectors):
     featureMatrixOne = vectors[communityOne].values.T
     featureMatrixTwo = vectors[communityTwo].values.T
+    featureMatrixOne = featureMatrixOne.astype(np.float64)
+    featureMatrixTwo = featureMatrixTwo.astype(np.float64)
+    lenCommunityOneWeight = np.array([1 / len(communityOne)] * len(communityOne))
+    lenCommunityTwoWeight = np.array([1 / len(communityTwo)] * len(communityTwo))
+    signature1 = (featureMatrixOne, lenCommunityOneWeight)
+    signature2 = (featureMatrixTwo, lenCommunityTwoWeight)
+    return getEMD(signature1, signature2)
+
+def getEMDCommunity(communityOne, communityTwo, vectorsOne,vectorsTwo):
+    featureMatrixOne = vectorsOne[communityOne].values.T
+    featureMatrixTwo = vectorsTwo[communityTwo].values.T
     featureMatrixOne = featureMatrixOne.astype(np.float64)
     featureMatrixTwo = featureMatrixTwo.astype(np.float64)
     lenCommunityOneWeight = np.array([1 / len(communityOne)] * len(communityOne))
@@ -263,6 +274,7 @@ if __name__ == '__main__':
     data = {1: [100.1, 40.1, 22.2], 2: [211.2, 20.2, 2.2], 3: [32, 190, 150], 4: [2, 100, 100], 5: [0, 0, 0],
             6: [50, 100, 80], 7: [255, 255, 255]}
     df = pd.DataFrame(data)
-    res = getEMDCommunity([1, 2, 3, 4], [2], df)
+    print(df)
+    res = getEMDCommunitys([1, 2, 3, 4,5,6,7], [1, 2, 3, 4,5,6,7], df)
     print(res)
     print('Success')

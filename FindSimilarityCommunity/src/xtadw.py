@@ -7,22 +7,26 @@ import warnings
 import networkx as nx
 import numpy as np
 import pandas as pd
-from numpy import linalg as la
 from sklearn.preprocessing import normalize
 
 import args
 from config import RepMethod
-from detect.SCAN import SCAN
-from src.emd import getEMD, getEMDCommunity
+from lsi.LSI import LSI
+from src.emd import getEMDCommunity
 from src.graph import Graph
+
+"""
+    XTAWD
+"""
 
 
 class XTADW(object):
 
     def __init__(self, graph, dim, lamb=0.2):
         self.g = graph
+        # Penalty Term
         self.lamb = lamb
-        # need k/2
+        # need k/2 todo
         self.dim = int(dim / 2)
         # self.train()
 
@@ -47,34 +51,43 @@ class XTADW(object):
             fout.write("{} {}\n".format(node, ' '.join([str(x) for x in vec])))
         fout.close()
 
-    def getT(self):
+    def getT(self, path, fileName, numtopics):
         """
-        get xTAWD need T Matrix
+        get xTAWD need T Matrix from LSI
         :return:
         """
-        g = self.g.G
-        look_back = self.g.look_back_list
-        self.features = np.vstack([g.nodes[look_back[i]]['feature']
-                                   for i in range(g.number_of_nodes())])
-        self.preprocessFeature()
-        return self.features.T
+        return LSI.getT(path, fileName, numtopics)
 
-    def preprocessFeature(self):
-        """
-        deal with text info
-        :return:
-        """
-        print(self.features[1, :])
-        print(len(self.features[1, :]))
-        if self.features.shape[1] > 34:
-            U, S, VT = la.svd(self.features)
-            Ud = U[:, 0:34]
-            print(Ud)
-            Sd = S[0:34]
-            print(Sd)
-            self.features = np.array(Ud) * Sd.reshape(34)
+    # def getT(self):
+    #     """
+    #     get xTAWD need T Matrix
+    #     :return:
+    #     """
+    #     g = self.g.G
+    #     look_back = self.g.look_back_list
+    #     print(look_back)
+    #     self.features = np.vstack([g.nodes[look_back[i]]['feature']
+    #                                for i in range(g.number_of_nodes())])
+    #     self.preprocessFeature()
+    #     print(type(self.features.T))
+    #     return self.features.T
+    #
+    # def preprocessFeature(self):
+    #     """
+    #     deal with text info
+    #     :return:
+    #     """
+    #     print(self.features[1, :])
+    #     print(len(self.features[1, :]))
+    #     if self.features.shape[1] > 34:
+    #         U, S, VT = la.svd(self.features)
+    #         Ud = U[:, 0:34]
+    #         print(Ud)
+    #         Sd = S[0:34]
+    #         print(Sd)
+    #         self.features = np.array(Ud) * Sd.reshape(34)
 
-    def train(self, epochs, rep_method=None, combineFeature=None):
+    def train(self, epochs, T, rep_method=None, combineFeature=None):
         """
 
         :param epochs: train epochs
@@ -82,14 +95,18 @@ class XTADW(object):
         :param combineFeature: G1 and G2's combination fearture
         :return: xTAWD's result
         """
-        self.adj = self.getAdj()
+        # self.adj = self.getAdj()
         # M=(A+A^2)/2 where A is the row-normalized adjacency matrix
         # self.M = (self.adj + np.dot(self.adj, self.adj)) / 2
+        # todo
+        # (node_size_1+node_size_2)*(node_size_1+node_size_2)
         self.M = self.getSimilarityMatrix(rep_method, combineFeature)
         # T is feature_size*node_num, text features
-        self.T = self.getT()
-        self.node_size = self.adj.shape[0]
-        self.feature_size = self.features.shape[1]
+        # get from lsi
+        self.T = T
+        node_size_1, node_size_2 = self.get_node_size()
+        self.node_size = node_size_1 + node_size_2
+        self.feature_size = self.T.shape[1]
         self.W = np.random.randn(self.dim, self.node_size)
         self.H = np.random.randn(self.dim, self.feature_size)
         # Update
@@ -139,9 +156,11 @@ class XTADW(object):
             (normalize(self.W.T), normalize(np.dot(self.T.T, self.H.T))))
         # get embeddings
         self.vectors = {}
-        look_back = self.g.look_back_list
+        # todo possible has mistake
+        # look_back = self.g.look_back_list
         for i, embedding in enumerate(self.Vecs):
-            self.vectors[int(look_back[i])] = embedding
+            # self.vectors[look_back[i]] = embedding
+            self.vectors[i] = embedding
         return pd.DataFrame(self.vectors)
 
     def get_khop_neighbors(self, rep_method):
@@ -212,7 +231,7 @@ class XTADW(object):
                 break  # finished finding neighborhoods (to the depth that we want)
             else:
                 current_layer += 1  # move out to next layer
-
+        # print(kneighbors_dict)
         return kneighbors_dict
 
     def get_degree_sequence(self, rep_method, kneighbors, current_node):
@@ -262,7 +281,8 @@ class XTADW(object):
         G_adj = self.g.G_adj
         num_nodes = G_adj.shape[0]
         if rep_method.num_buckets is None:  # 1 bin for every possible degree value
-            num_features = self.g.max_degree + 1  # count from 0 to max degree...could change if bucketizing degree sequences
+            num_features = self.g.max_degree + 1  # count from 0 to max degree
+            # ...could change if bucketizing degree sequences
         else:  # logarithmic binning with num_buckets as the base of logarithm (default: base 2)
             num_features = int(math.log(self.g.max_degree, rep_method.num_buckets)) + 1
         feature_matrix = np.zeros((num_nodes, num_features))
@@ -303,9 +323,9 @@ class XTADW(object):
         :param rep_method:
         :return: simlar matrix
         """
-        C = np.zeros((self.g.N, self.g.N))
-        for out_node_index in range(self.g.N):  # for each of N nodes
-            for inner_node_index in range(self.g.N):  # for each of p landmarks
+        C = np.zeros((self.g_1.N + self.g_2.N, self.g_1.N + self.g_2.N))
+        for out_node_index in range(self.g_1.N + self.g_2.N):  # for each of N nodes
+            for inner_node_index in range(self.g_1.N + self.g_2.N):  # for each of p landmarks
                 # calcu similar matrix
                 C[out_node_index, inner_node_index] = self.compute_similarity(
                     rep_method,
@@ -316,6 +336,7 @@ class XTADW(object):
 
     def get_sample_nodes(self, rep_method):
         """
+        sample nodes in RepMethod
         Sample landmark nodes (to compute all pairwise similarities to in Nystrom approx)
         :param rep_method: graph (just need graph size here), RepMethod (just need dimensionality here)
         :return: np array of node IDs
@@ -326,6 +347,7 @@ class XTADW(object):
 
     def get_feature_dimensionality(self, rep_method, verbose=True):
         """
+        control dimensionality of representations
         Get dimensionality of learned representations Related to rank of similarity matrix approximations
         :param rep_method: Input: graph, RepMethod
         :param verbose:
@@ -339,6 +361,7 @@ class XTADW(object):
 
     def get_representations(self, rep_method, verbose=True):
         """
+        get the final representations of xNetMF
         :param rep_method:
         :param verbose:
         :return: xNetMF pipeline
@@ -383,40 +406,24 @@ class XTADW(object):
             reprsn = reprsn / np.linalg.norm(reprsn, axis=1).reshape((reprsn.shape[0], 1))
         return reprsn
 
-    def get_community_similarity(self, comm_one, comm_two):
+    def get_community_similarity(self, comm_one, comm_two, vectors):
         """
         get community similarity
         :return:
         """
-        len_comm_two = len(comm_two)
-        len_comm_one = len(comm_one)
-
-        getEMD()
+        return getEMDCommunity(comm_one, comm_two, vectors)
 
 
-if __name__ == "__main__":
-    warnings.filterwarnings("ignore", category=FutureWarning)
-    arg = args.args()
-    arg.input = "data/test/karate.edgelist"
-    t1 = time.time()
-    nx_graph = nx.read_edgelist(arg.input, nodetype=int, comments="%")
-    adj_matrix = nx.adjacency_matrix(nx_graph).todense()
-    g = Graph(adj_matrix)
-    g.read_edgelist(filename=arg.input, weighted=arg.weighted,
-                    directed=arg.directed)
-    g.read_node_features(arg.feature_file)
-    rep_method = RepMethod(max_layer=2)
-    rep_method.p = g.N
-    xTawd = XTADW(g, arg.representation_size)
-    feature = xTawd.get_features(rep_method)
-    res = xTawd.train(1, rep_method, feature)
-    print(res)
-    algorithm = SCAN(g.G, 0.7, 3)
-    communities = algorithm.execute()
-    for community in communities:
-        print('community: ', sorted(community))
-    hubs_outliers = algorithm.get_hubs_outliers(communities)
-    print('hubs: ', hubs_outliers[0])
-    print('outliers: ', hubs_outliers[1])
-    sim = getEMDCommunity([13, 1], [3,14], res)
-    print(sim)
+if __name__ == '__main__':
+    pass
+    # res = xTawd.train(10, rep_method, structure_feature)
+    # print(res)
+    # sim = xTawd.get_community_similarity([13, 1], [13, 1], res)
+    # print(sim)
+    # algorithm = SCAN(g.G, 0.7, 3)
+    # communities = algorithm.execute()
+    # for community in communities:
+    #     print('community: ', sorted(community))
+    # hubs_outliers = algorithm.get_hubs_outliers(communities)
+    # print('hubs: ', hubs_outliers[0])
+    # print('outliers: ', hubs_outliers[1])
