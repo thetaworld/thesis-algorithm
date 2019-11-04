@@ -103,7 +103,6 @@ class TADW(object):
             (normalize(self.W.T), normalize(np.dot(self.T.T, self.H.T))))
         # get embeddings
         self.vectors = {}
-        # todo possible has mistake
         look_back = self.g.look_back_list
         for i, embedding in enumerate(self.Vecs):
             self.vectors[look_back[i]] = embedding

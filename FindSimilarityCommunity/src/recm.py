@@ -1,7 +1,3 @@
-import warnings
-
-import gensim
-import math
 import time
 import warnings
 from numpy import linalg as la
@@ -10,6 +6,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import normalize
 import args
+from algorithm.LFM import LFM
 from config import RepMethod
 # from lsi.LSI import LSI
 from detect.SCAN import SCAN
@@ -38,7 +35,6 @@ class RECM(object):
         """
         # self.adj = self.getAdj()
         # M=(A+A^2)/2 where A is the row-normalized adjacency matrix
-        # todo
         self.M = self.getSimilarityMatrix(rep_method, combineFeature)
         # T is feature_size*node_num, text features
         # get from lsi
@@ -93,7 +89,7 @@ class RECM(object):
             (normalize(self.W.T), normalize(np.dot(self.T.T, self.H.T))))
 
         # print(self.Vecs)
-        print(self.Vecs.shape)
+        # print(self.Vecs.shape)
         # get embeddings
         self.vectors_1 = {}
         self.vectors_2 = {}
@@ -104,7 +100,7 @@ class RECM(object):
         look_back_2 = self.graph2.look_back_list
         node_size_2 = self.graph2.N
         # print(look_back_2)
-        print("****************")
+        # print("****************")
         for i, embedding in enumerate(self.Vecs):
             # print(i)
             # print("---------------")
@@ -229,3 +225,5 @@ if __name__ == "__main__":
     res = getEMDCommunity(['1', '13', '3', '7'], ['1', '13', '3', '7'], df1,df2)
     print(res)
     print('Success')
+
+
