@@ -37,8 +37,8 @@ class Louvain():
         self._cid_vertices = {}  # 需维护的关于社区的信息(社区编号,其中包含的结点编号的集合)
         self._vid_vertex = {}  # 需维护的关于结点的信息(结点编号，相应的Vertex实例)
         for vid in self._G.keys():
-            self._cid_vertices[vid] = set([vid])
-            self._vid_vertex[vid] = Vertex(vid, vid, set([vid]))
+            self._cid_vertices[vid] = {vid}
+            self._vid_vertex[vid] = Vertex(vid, vid, {vid})
             self._m += sum([1 for neighbor in self._G[vid].keys() if neighbor > vid])
 
     def first_stage(self):
@@ -88,7 +88,7 @@ class Louvain():
                 for k, v in self._G[vid].items():
                     if k in vertices:
                         new_vertex._kin += v / 2.0
-            cid_vertices[cid] = set([cid])
+            cid_vertices[cid] = {cid}
             vid_vertex[cid] = new_vertex
 
         G = collections.defaultdict(dict)

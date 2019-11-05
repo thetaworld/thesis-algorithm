@@ -94,7 +94,7 @@ class EM():
 
 if __name__ == '__main__':
     G = nx.karate_club_graph()
-    algorithm = EM(G, 2)
+    algorithm = EM(G, 3)
     communities = algorithm.execute()
     for c in communities:
         print(len(c), sorted(c))

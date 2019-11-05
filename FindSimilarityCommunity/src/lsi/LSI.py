@@ -1,4 +1,8 @@
 # import modules
+import warnings
+
+warnings.filterwarnings(action='ignore', category=UserWarning, module='gensim')
+
 import gensim
 import os.path
 from gensim import corpora
@@ -86,6 +90,7 @@ class LSI:
         Purpose: create LSA model using gensim
         Output : return LSA model
         """
+
         dictionary, doc_term_matrix = LSI.prepare_corpus(doc_clean)
         # generate LSA model
         lsamodel = LsiModel(doc_term_matrix, num_topics=number_of_topics, id2word=dictionary)  # train model
@@ -102,4 +107,5 @@ class LSI:
 
 
 if __name__ == '__main__':
-    LSI.getT(r'D:\workspace\pycharm\paper_algorithm\FindSimilarityCommunity\src\lsi', 'test.txt',10)
+    t = LSI.getT(r'D:\workspace\pycharm\paper_algorithm\FindSimilarityCommunity\src\lsi', 'test.txt', 10)
+    print(t)

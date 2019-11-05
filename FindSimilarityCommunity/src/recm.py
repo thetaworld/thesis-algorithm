@@ -149,7 +149,8 @@ class RECM(object):
         features_2 = np.vstack([g.nodes[look_back[i]]['feature']
                                 for i in range(g.number_of_nodes())])
         self.features = np.vstack((features_1, features_2))
-        self.preprocessFeature()
+        print(self.features.shape)
+        # self.preprocessFeature()
         # print(self.features.T)
         # print(self.features.T.shape)
         return self.features.T
