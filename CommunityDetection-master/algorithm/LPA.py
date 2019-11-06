@@ -68,6 +68,7 @@ class LPA:
 
 if __name__ == '__main__':
     G = nx.karate_club_graph()
+    print(type(G))
     algorithm = LPA(G)
     communities = algorithm.execute()
     for community in communities:

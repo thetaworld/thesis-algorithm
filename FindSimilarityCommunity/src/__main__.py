@@ -4,6 +4,12 @@ import time
 import warnings
 import numpy as np
 import args
+import collections
+
+from detect.clique import CPM
+from util.graph_helper import load_graph
+from util.graph_helper import clone_graph
+# from src.detect.Louvain import load_graph
 from algorithm.EM import EM
 from algorithm.GN import GN
 from algorithm.LFM import LFM
@@ -19,15 +25,57 @@ from src.xtadw import XTADW
 
 warnings.filterwarnings(action='ignore', category=UserWarning, module='gensim')
 
+def load_graph_GN(path):
+    G = nx.Graph()
+    with open(path) as text:
+        for line in text:
+            vertices = line.strip().split(" ")
+            source = int(vertices[0])
+            target = int(vertices[1])
+            G.add_edge(source, target)
+    return G
 
-def main():
+
+def clone_graph(G):
+    cloned_g = nx.Graph()
+    for edge in G.edges():
+        cloned_g.add_edge(edge[0], edge[1])
+    return cloned_g
+
+
+def load_graph_LV(path):
+    G = collections.defaultdict(dict)
+    with open(path) as text:
+        for line in text:
+            vertices = line.strip().split()
+            v_i = int(vertices[0])
+            v_j = int(vertices[1])
+            G[v_i][v_j] = 1.0
+            G[v_j][v_i] = 1.0
+    return G
+
+
+class Vertex:
+
+    def __init__(self, vid, cid, nodes, k_in=0):
+        self._vid = vid
+        self._cid = cid
+        self._nodes = nodes
+        self._kin = k_in
+
+
+def main(arg_one_input="data/paper/synthetic/football_1.net",
+         arg_one_feature_file="data/paper/synthetic/football_info_115_1",
+         arg_two_input="data/paper/synthetic/football_1-0.2.net",
+         arg_two_feature_file="data/paper/synthetic/football_info_115_2"
+         ):
     warnings.filterwarnings("ignore", category=FutureWarning)
     t1 = time.time()
     # init graph
     rep_method = RepMethod(max_layer=2)
     arg_one = args.args()
-    arg_one.input = "data/test/football_1.txt"
-    arg_one.feature_file = "data/test/cora.features_1"
+    arg_one.input = arg_one_input
+    arg_one.feature_file = arg_one_feature_file
     nx_graph_one = nx.read_edgelist(arg_one.input, nodetype=int, comments="%")
     adj_matrix_one = nx.adjacency_matrix(nx_graph_one).todense()
     g_one = Graph(adj_matrix_one)
@@ -37,8 +85,8 @@ def main():
     g_one.read_node_features(arg_one.feature_file)
 
     arg_two = args.args()
-    arg_two.input = "data/test/football_2.txt"
-    arg_two.feature_file = "data/test/cora.features_2"
+    arg_two.input = arg_two_input
+    arg_two.feature_file = arg_two_feature_file
     nx_graph_two = nx.read_edgelist(arg_two.input, nodetype=int, comments="%")
     adj_matrix_two = nx.adjacency_matrix(nx_graph_two).todense()
     g_two = Graph(adj_matrix_two)
@@ -48,38 +96,56 @@ def main():
     g_two.read_node_features(arg_two.feature_file)
     # community detection
 
-    algorithm_one = SCAN(g_one.G, 0.7, 3)
+    # SCAN
+    algorithm_one = SCAN(g_one.G, 0.3, 3)
     communities_one = algorithm_one.execute()
-    print(communities_one)
-
-    algorithm_two = SCAN(g_two.G, 0.7, 3)
+    algorithm_two = SCAN(g_two.G, 0.3, 3)
     communities_two = algorithm_two.execute()
-    print(communities_two)
 
+    # LFM
     # algorithm_one = LFM(g_one.G, 0.8)
     # communities_one = algorithm_one.execute()
     # algorithm_two = LFM(g_two.G, 0.8)
     # communities_two = algorithm_two.execute()
 
-    # algorithm_one = GN(g_one.G)
+    # GN
+    # G_one = load_graph_GN(arg_one_input)
+    # algorithm_one = GN(G_one)
     # communities_one = algorithm_one.execute()
-    # algorithm_two = GN(g_two.G)
+    # G_two=load_graph_GN(arg_two_input)
+    # algorithm_two = GN(G_two)
     # communities_two = algorithm_two.execute()
-    # print(communities_one)
-    # print(communities_two)
+
+    # LPA can not use this algorithm
     # algorithm_one = LPA(g_one.G)
     # communities_one = algorithm_one.execute()
     # algorithm_two = LPA(g_two.G)
     # communities_two = algorithm_two.execute()
-    # print(communities_one)
-    # print(communities_two)
+
+    # EM
     # algorithm_one = EM(g_one.G, 9)
     # communities_one = algorithm_one.execute()
     # algorithm_two = EM(g_two.G, 2)
     # communities_two = algorithm_two.execute()
+
+    # LV
+    # G_one = load_graph_LV(arg_one_input)
+    # algorithm_one = Louvain(G_one)
+    # communities_one = algorithm_one.execute()
+    # G_two=load_graph_LV(arg_two_input)
+    # algorithm_two = Louvain(G_two)
+    # communities_two = algorithm_two.execute()
+
+    # CPM
+    # algorithm_one = CPM()
+    # communities_one = algorithm_one.execute(g_one.G, 4)
+    # algorithm_two = CPM()
+    # communities_two = algorithm_two.execute(g_two.G, 4)
+
     # print(communities_one)
     # print(communities_two)
 
+    # demo
     # algorithm = SCAN(g_one.G)
     # communities = algorithm.execute()
     # print(communities)
@@ -125,8 +191,8 @@ def computer_pair(communities_one, communities_two, g_one_node_embeding, g_two_n
     dict_community_two = {}
     for i, c in enumerate(communities_two):
         dict_community_two[i] = c
-    print(dict_community_one)
-    print(dict_community_two)
+    # print(dict_community_one)
+    # print(dict_community_two)
     len_one = len(dict_community_one)
     len_two = len(dict_community_two)
     len_community_pair = min(len_one, len_two)
@@ -164,3 +230,17 @@ def computer_pair(communities_one, communities_two, g_one_node_embeding, g_two_n
 
 if __name__ == "__main__":
     main()
+    # init graph
+    # rep_method = RepMethod(max_layer=2)
+    # arg_one = args.args()
+    # arg_one.input = "data/test/Wiki_edgelist_1.txt"
+    # arg_one.feature_file = "data/test/wiki_info_2045_1"
+    # nx_graph_one = nx.read_edgelist(arg_one.input, nodetype=int, comments="%")
+    # adj_matrix_one = nx.adjacency_matrix(nx_graph_one).todense()
+    # g_one = Graph(adj_matrix_one)
+    # g_one.read_edgelist(filename=arg_one.input, weighted=arg_one.weighted,
+    #                     directed=arg_one.directed)
+    # g_one.read_node_features(arg_one.feature_file)
+    # print(g_one.node_size)
+
+

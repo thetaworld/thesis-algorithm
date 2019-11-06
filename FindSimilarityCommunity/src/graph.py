@@ -56,7 +56,8 @@ class Graph(object):
         self.encode_node()
 
     def read_edgelist(self, filename, weighted=False, directed=False):
-        self.G = nx.DiGraph()
+        # self.G = nx.DiGraph()
+        self.G = nx.Graph()
 
         if directed:
             def read_unweighted(l):

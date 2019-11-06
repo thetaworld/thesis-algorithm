@@ -71,5 +71,6 @@ if __name__ == '__main__':
     G = nx.karate_club_graph()
     algorithm = CPM(G, 4)
     communities = algorithm.execute()
+    print(communities)
     for community in communities:
         print(community)

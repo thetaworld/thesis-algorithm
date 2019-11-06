@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def read_write_line(path_from, path_to):
     ms = open(path_from)
     for line in ms.readlines():
@@ -8,6 +11,14 @@ def read_write_line(path_from, path_to):
             mon.write(line)
 
 
+def produce_text_info(path_to):
+    a = np.random.randint(0, 2, size=(2405, 10))
+    for i, line in enumerate(a):
+        with open(path_to, "a") as mon:
+            mon.write(str(i)+" "+str(line)[1:-1]+"\n")
+
+
 if __name__ == '__main__':
-    read_write_line(b"D:\workspace\pycharm\paper_algorithm\FindSimilarityCommunity\src\data\preprocessData\M1.edges",
-                    b"D:\workspace\pycharm\paper_algorithm\FindSimilarityCommunity\src\data\preprocessData\M1_1.edges")
+    # read_write_line(b"D:\workspace\pycharm\paper_algorithm\FindSimilarityCommunity\src\data\preprocessData\M1.edges",
+    #                 b"D:\workspace\pycharm\paper_algorithm\FindSimilarityCommunity\src\data\preprocessData\M1_1.edges")
+    produce_text_info(b"D:\workspace\pycharm\paper_algorithm\FindSimilarityCommunity\src\data\preprocessData\info_2045")

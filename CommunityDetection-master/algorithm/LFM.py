@@ -73,6 +73,10 @@ class Community():
     def get_fitness(self):
         return float(self._k_in) / ((self._k_in + self._k_out) ** self._alpha)
 
+    @property
+    def G(self):
+        return self._G
+
 
 class LFM():
 
@@ -105,7 +109,7 @@ class LFM():
 
                 to_be_remove = c.recalculate()
                 while to_be_remove is not None:
-                    c.remove_node(to_be_remove)
+                    c.G.remove_node(to_be_remove)
                     to_be_remove = c.recalculate()
 
                 to_be_examined = c.get_neighbors()
