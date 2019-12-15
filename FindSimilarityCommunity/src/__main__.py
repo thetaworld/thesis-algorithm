@@ -2,6 +2,8 @@ from __future__ import print_function
 
 import time
 import warnings
+
+import igraph
 import numpy as np
 import args
 import collections
@@ -47,7 +49,7 @@ def load_graph_LV(path):
     G = collections.defaultdict(dict)
     with open(path) as text:
         for line in text:
-            vertices = line.strip().split()
+            vertices = line.strip().split(" ")
             v_i = int(vertices[0])
             v_j = int(vertices[1])
             G[v_i][v_j] = 1.0
@@ -66,13 +68,13 @@ class Vertex:
 
 def main(arg_one_input="data/paper/synthetic/football_1.net",
          arg_one_feature_file="data/paper/synthetic/football_info_115_1",
-         arg_two_input="data/paper/synthetic/football_1-0.2.net",
+         arg_two_input="data/paper/synthetic/football_1-0.05.net",
          arg_two_feature_file="data/paper/synthetic/football_info_115_2"
          ):
     warnings.filterwarnings("ignore", category=FutureWarning)
     t1 = time.time()
     # init graph
-    rep_method = RepMethod(max_layer=2)
+    rep_method = RepMethod(max_layer=2, alpha=0.1)
     arg_one = args.args()
     arg_one.input = arg_one_input
     arg_one.feature_file = arg_one_feature_file
@@ -95,11 +97,11 @@ def main(arg_one_input="data/paper/synthetic/football_1.net",
                         directed=arg_two.directed)
     g_two.read_node_features(arg_two.feature_file)
     # community detection
-
+    # igraph.Graph.community_infomap()
     # SCAN
-    algorithm_one = SCAN(g_one.G, 0.3, 3)
+    algorithm_one = SCAN(g_one.G, 0.5, 3)
     communities_one = algorithm_one.execute()
-    algorithm_two = SCAN(g_two.G, 0.3, 3)
+    algorithm_two = SCAN(g_two.G, 0.5, 3)
     communities_two = algorithm_two.execute()
 
     # LFM
@@ -160,11 +162,24 @@ def main(arg_one_input="data/paper/synthetic/football_1.net",
 
     structure_feature_one, structure_feature_two = completion_vec(structure_feature_one, structure_feature_two)
     combine_future = np.vstack((structure_feature_one, structure_feature_two))
-    recm = RECM(6, 0.2, g_one, g_two)
+    recm = RECM(5, 0.1, g_one, g_two)
     recm.getT()
-    g_one_node_embeding, g_two_node_embeding = recm.train(1, rep_method, combine_future)
-    res = computer_pair(communities_one, communities_two, g_one_node_embeding, g_two_node_embeding)
-    print(res)
+    g_one_node_embeding, g_two_node_embeding = recm.train(5, rep_method, combine_future)
+    # print(communities_one)
+    # print(communities_two)
+    # print("shape", g_one_node_embeding.shape)
+    res, len_community_pair = computer_pair(communities_one, communities_two, g_one_node_embeding, g_two_node_embeding)
+    # print(res)
+    TP_FP = len(res)
+    TP = 0
+    TP_FN = len_community_pair
+    for tuple_ele in res:
+        tuple_ele = tuple_ele[0]
+        if tuple_ele[0] == tuple_ele[1]:
+            TP = TP+1
+    pre = TP/TP_FP
+    recall = TP/TP_FN
+    print("pre: ", pre, "recall: ", recall)
     print("sum time ", time.time() - t1)
 
 
@@ -207,6 +222,8 @@ def computer_pair(communities_one, communities_two, g_one_node_embeding, g_two_n
         for key_two in dict_community_two.keys():
             communities_one_set = list(dict_community_one[key_one])
             communities_two_set = list(dict_community_two[key_two])
+            communities_one_set = [str(x) for x in communities_one_set]
+            communities_two_set = [str(x) for x in communities_two_set]
             temp = getEMDCommunity(communities_one_set, communities_two_set,
                                    g_one_node_embeding, g_two_node_embeding)
             temp_list.append(key_one)
@@ -225,7 +242,7 @@ def computer_pair(communities_one, communities_two, g_one_node_embeding, g_two_n
                 break
         exclude_list_one.append(communities_pair_ele[0][0])
         exclude_list_two.append(communities_pair_ele[0][1])
-    return communities_pair
+    return communities_pair, len_community_pair
 
 
 if __name__ == "__main__":
