@@ -86,6 +86,36 @@ class PISAlgorithm(object):
         arg = pis.args.args()
         # get pre and recall
         def get_pre_recall(pre,recall):
+            ua = PISAlgorithm()
+
+            # example code
+            gi, qi = 0, 0
+            ua.run(communities_one, communities_two, display_mapping=True)
+
+            # run in one bacth
+            # and compare result with Networkx's
+            cmp_methods = ['has_iso', 'all_mappings_match']
+            extract_mapping = lambda gm: sorted(zip(gm.mapping.values(), gm.mapping.keys()))
+            extract_all_mappings = lambda gm: sorted(
+                [sorted(zip(mapping.values(), mapping.keys())) for mapping in list(gm.subgraph_isomorphisms_iter())])
+
+            cmp_method = cmp_methods[0]
+            num_unmatched = 0
+            for gi in range(10):
+                # print gi
+                for qi in range(10):
+                    gm = iso.GraphMatcher(communities_one, communities_two,
+                                          node_match=iso.categorical_node_match('label', -1),
+                                          edge_match=iso.categorical_edge_match('label', -1))
+                    if cmp_method == 'has_iso':
+                        ua_res = ua.has_iso(communities_one, communities_two, display_mapping=False)
+                        unmatched = ua_res != gm.subgraph_is_isomorphic()
+                        num_unmatched += unmatched
+                    else:
+                        ua.run(communities_one, communities_two, display_mapping=False)
+                        nx_mappings = extract_all_mappings(gm)
+                        unmatched = ua.mappings != nx_mappings
+                        num_unmatched += unmatched
             C = self.M.dot((self.M.dot(self.B)).T)
             isomorphic = (self.A <= C).all()
             if isomorphic:

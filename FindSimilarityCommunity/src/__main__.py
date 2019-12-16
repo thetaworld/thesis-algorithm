@@ -66,15 +66,39 @@ class Vertex:
         self._kin = k_in
 
 
-def main(arg_one_input="data/paper/synthetic/football_1.net",
-         arg_one_feature_file="data/paper/synthetic/football_info_115_1",
-         arg_two_input="data/paper/synthetic/football_1-0.05.net",
-         arg_two_feature_file="data/paper/synthetic/football_info_115_2"
+def main(arg_one_input="data/paper/truedata/facebook.net",
+             arg_one_feature_file="data/paper/truedata/facebook_info",
+             arg_two_input="data/paper/truedata/twitter.net",
+             arg_two_feature_file="data/paper/truedata/twitter_info"
          ):
+    # syn data input as follow
+    # arg_one_input="data/paper/synthetic/football_1.net",
+    #          arg_one_feature_file="data/paper/synthetic/football_info_115_1",
+    #          arg_two_input="data/paper/synthetic/football_1-0.01.net",
+    #          arg_two_feature_file="data/paper/synthetic/football_info_115_2"
+
+
+
+
+    # tue data input as follow
+    # arg_one_input="data/paper/truedata/facebook.net",
+    #          arg_one_feature_file="data/paper/truedata/facebook_info",
+    #          arg_two_input="data/paper/truedata/twitter.net",
+    #          arg_two_feature_file="data/paper/truedata/twitter_info"
+
+
+    # disturb factor input as follow
+    # arg_one_input="data/paper/disturb/football_1-0.1.net",
+    #              arg_one_feature_file="data/paper/synthetic/football_info_115_1",
+    #              arg_two_input="data/paper/disturb/football_1-0.1.net",
+    #              arg_two_feature_file="data/paper/synthetic/football_info_115_2"
+
     warnings.filterwarnings("ignore", category=FutureWarning)
     t1 = time.time()
     # init graph
-    rep_method = RepMethod(max_layer=2, alpha=0.1)
+    # K is maxLayer
+    # alpha is discount factor for higher layers
+    rep_method = RepMethod(max_layer=4, alpha=0.1)
     arg_one = args.args()
     arg_one.input = arg_one_input
     arg_one.feature_file = arg_one_feature_file
@@ -99,24 +123,32 @@ def main(arg_one_input="data/paper/synthetic/football_1.net",
     # community detection
     # igraph.Graph.community_infomap()
     # SCAN
-    algorithm_one = SCAN(g_one.G, 0.5, 3)
+    # algorithm_one = SCAN(g_one.G, 0.5, 3)
+    # communities_one = algorithm_one.execute()
+    # algorithm_two = SCAN(g_two.G, 0.5, 3)
+    # communities_two = algorithm_two.execute()
+
+    # LV
+    # G_one = load_graph_LV(arg_one_input)
+    # algorithm_one = Louvain(G_one)
+    # communities_one = algorithm_one.execute()
+    # G_two=load_graph_LV(arg_two_input)
+    # algorithm_two = Louvain(G_two)
+    # communities_two = algorithm_two.execute()
+
+    # CPM
+    # algorithm_one = CPM()
+    # communities_one = algorithm_one.execute(g_one.G, 4)
+    # algorithm_two = CPM()
+    # communities_two = algorithm_two.execute(g_two.G, 4)
+
+    # GN other experiment run on this algorithm
+    G_one = load_graph_GN(arg_one_input)
+    algorithm_one = GN(G_one)
     communities_one = algorithm_one.execute()
-    algorithm_two = SCAN(g_two.G, 0.5, 3)
+    G_two=load_graph_GN(arg_two_input)
+    algorithm_two = GN(G_two)
     communities_two = algorithm_two.execute()
-
-    # LFM
-    # algorithm_one = LFM(g_one.G, 0.8)
-    # communities_one = algorithm_one.execute()
-    # algorithm_two = LFM(g_two.G, 0.8)
-    # communities_two = algorithm_two.execute()
-
-    # GN
-    # G_one = load_graph_GN(arg_one_input)
-    # algorithm_one = GN(G_one)
-    # communities_one = algorithm_one.execute()
-    # G_two=load_graph_GN(arg_two_input)
-    # algorithm_two = GN(G_two)
-    # communities_two = algorithm_two.execute()
 
     # LPA can not use this algorithm
     # algorithm_one = LPA(g_one.G)
@@ -124,7 +156,8 @@ def main(arg_one_input="data/paper/synthetic/football_1.net",
     # algorithm_two = LPA(g_two.G)
     # communities_two = algorithm_two.execute()
 
-    # EM
+    # LPA
+
     # algorithm_one = EM(g_one.G, 9)
     # communities_one = algorithm_one.execute()
     # algorithm_two = EM(g_two.G, 2)
@@ -144,6 +177,12 @@ def main(arg_one_input="data/paper/synthetic/football_1.net",
     # algorithm_two = CPM()
     # communities_two = algorithm_two.execute(g_two.G, 4)
 
+    # LFM
+    # algorithm_one = LFM(g_one.G, 0.8)
+    # communities_one = algorithm_one.execute()
+    # algorithm_two = LFM(g_two.G, 0.8)
+    # communities_two = algorithm_two.execute()
+
     # print(communities_one)
     # print(communities_two)
 
@@ -162,6 +201,8 @@ def main(arg_one_input="data/paper/synthetic/football_1.net",
 
     structure_feature_one, structure_feature_two = completion_vec(structure_feature_one, structure_feature_two)
     combine_future = np.vstack((structure_feature_one, structure_feature_two))
+    # S is dim the first para
+    # lamb is the second para penalty factor
     recm = RECM(5, 0.1, g_one, g_two)
     recm.getT()
     g_one_node_embeding, g_two_node_embeding = recm.train(5, rep_method, combine_future)

@@ -44,17 +44,13 @@ def list2dict(a):
 def CS(G,G2,c1,c2):
     # 执行CS算法
     # get pre and recall
-
     arg = cs.args.args()
-    def getRecall(f, G1,G2,pre, recall):
+    def get_recall(f, G1,G2,pre, recall):
         G_cloned = G1.copy()
         G_tmp = G2.copy()
         partition = [[n for n in G.nodes()]]
         max_Q = 0.0
         max_Q = round()
-
-        recall = random.uniform(0.44, 0.65)
-        recall = round(recall, 2)
         while len(G_tmp.edges()) != 0:
             edge = max(nx.edge_betweenness(G_tmp).items(),key=lambda item:item[1])[0]
             G_tmp.remove_edge(edge[0], edge[1])

@@ -29,8 +29,8 @@ class GN:
                 if cur_Q > self._max_Q:
                     self._max_Q = cur_Q
                     self._partition = components
-        print(self._max_Q)
-        print(self._partition)
+        # print(self._max_Q)
+        # print(self._partition)
         return self._partition
 
 

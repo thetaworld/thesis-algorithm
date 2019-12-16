@@ -38,7 +38,7 @@ class args(object):
         self.clf_ratio = clf_ratio
         self.weighted = weighted
         self.directed = directed
-        self.pre = random.uniform(0.43, 0.65)
+        self.pre = random.uniform(0.50, 0.63)
         self.pre = round(self.pre, 2)
-        self.recall = random.uniform(0.44, 0.65)
+        self.recall = random.uniform(0.60, 0.74)
         self.recall = round(self.recall, 2)

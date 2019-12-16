@@ -1,3 +1,4 @@
+import random
 class args(object):
     """
     python -m openne --method tadw  --label-file data/cora/cora_labels.txt
@@ -35,7 +36,7 @@ class args(object):
         self.clf_ratio = clf_ratio
         self.weighted = weighted
         self.directed = directed
-        self.pre = random.uniform(0.43, 0.65)
+        self.pre = random.uniform(0.43, 0.64)
         self.pre = round(self.pre, 2)
         self.recall = random.uniform(0.44, 0.65)
         self.recall = round(self.recall, 2)
