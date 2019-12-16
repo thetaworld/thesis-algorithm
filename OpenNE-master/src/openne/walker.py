@@ -5,7 +5,7 @@ import multiprocessing
 
 
 def deepwalk_walk_wrapper(class_instance, walk_length, start_node):
-    class_instance.deepwalk_walk(walk_length, start_node)
+    class_instance._ceum(walk_length, start_node)
 
 
 class BasicWalker:
